@@ -1,16 +1,20 @@
 import React,{Fragment} from 'react'
 import ReactDOM from 'react-dom'
-import styled,{injectGlobal,ThemeProvider} from 'styled-components'
-import Image1 from './Assets/600t1.png'
-import Image2 from './Assets/600t2.png'
-
+import styled,{injectGlobal,ThemeProvider,keyframes} from 'styled-components'
 
 export default class SkewDesign extends React.Component{
+
 	constructor(props){
 		super(props)
 		this.state = {
-				skewed:false
-		
+				skewed:false,
+				primary:this.props.primary || '#eee',
+				primaryTextColor:this.props.data.primaryTextColor || '#222',
+				secondary:this.props.secondary || '#222',
+				secondaryTextColor:this.props.data.secondaryTextColor || '#eee',
+				divider:this.props.divider|| '#fda800',
+				fullscreen:this.props.fullscreen || false,
+				height:'55vh'
 		}
 	}
 
@@ -19,13 +23,12 @@ export default class SkewDesign extends React.Component{
 		let delta = (e.clientX-window.innerWidth/2)
 		ReactDOM.findDOMNode(this.refs.handle).style.left = e.clientX+delta+'px'
 		ReactDOM.findDOMNode(this.refs.topLayer).style.width = e.clientX+delta+1000+'px'
-		
 	}
 
 	handleMouseOut = (e)=>{
 		this.setState({skewed:false})
 		ReactDOM.findDOMNode(this.refs.handle).style.left='50%'
-		ReactDOM.findDOMNode(this.refs.topLayer).style.width ='50%'
+		ReactDOM.findDOMNode(this.refs.topLayer).style.width = `calc(1000px + 50vw)`
 
 	}
 
@@ -39,19 +42,17 @@ export default class SkewDesign extends React.Component{
 				<Layer bottom>
 					<ContentWrap bottom>
 						<ContentBody right>
-							<Heading color="#fda800">Look Sharp</Heading>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Perspiciatis non nesciunt obcaecati ea iste aspernatur qui tenetur ex soluta ducimus.</p>
-						</ContentBody>
-						<Image src={Image1}/>
+							<Heading color={this.props.data.secondaryHeaderColor}>{this.props.data.secondaryHeader}</Heading>
+							<p>{this.props.data.secondaryText || '#fff' }</p></ContentBody>
+						<Image src={this.props.data.secondaryImage}/>
 					</ContentWrap>
 				</Layer>
 					<Layer top ref='topLayer'>
 					<ContentWrap top>
 						<ContentBody>
-							<Heading color="black">Look Sharp</Heading>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Perspiciatis non nesciunt obcaecati ea iste aspernatur qui tenetur ex soluta ducimus.</p>
-						</ContentBody>
-						<Image src={Image2}/>
+							<Heading color={this.props.data.primaryHeaderColor}>{this.props.data.primaryHeader}</Heading>
+							<p>{this.props.data.primaryText || '#000'}</p></ContentBody>
+						<Image src={this.props.data.primaryImage}/>
 					</ContentWrap>
 				</Layer>
 				<Handle ref='handle'/>
@@ -69,55 +70,47 @@ body{
 	font-family: Roboto, Helvetica,sans-serif
 }
 `
-const Navbar = styled.div`
-position:relative;
-box-sizing:border-box;
-padding:10px 5px 10px 5px;
-color:#222;
-z-index:10;
-top:0;
-left:0;
-display:flex;
-justify-content:space-between;
-align-items:center;
-width:100vw;
-min-height:60px;
-box-shadow: 0 0 10px #000;
-background:#eee;
+const slideLeft  = keyframes`
+0%{
+	transform:translateX(-1000px)
+}
+100%{
+	transform:translateX(0px)
+}
 `
 
+const grow  = keyframes`
+0%{
+	transform:scale(0.1)
+}
+100%{
+	transform:scale(1)
+}
+`
 const Wrapper = styled.section`
 position:relative;
 width:100%;
-min-height:100vh;
+min-height:${(props)=>props.theme.fullscreen?'100vh':props.theme.height};
 overflow:hidden;
 `
 
 const Layer = styled.div`
 position:absolute;
-min-height:100vh;
+min-height:${(props)=>props.theme.fullscreen?'100vh':props.theme.height};
 overflow:hidden;
 ${(props)=>{
 	if(props.top){
-		if(!props.theme.skewed){
-			return (`
-			background:#eee;
-			z-index:2;
-			width:50vw`)
-		}else{
 			return(`
-			background:#eee;
+			background:${props.theme.primary};
 			z-index:2;
-			width:50vw
 			transform:skew(-30deg);
 			margin-left:-1000px;
-			width:calc(50vw + 1000px)
+			width:calc(1000px + 50vw)
 			`)
-		}
 	}
 	else{
 	return(`
-	background:#222;
+	background:${props.theme.secondary};
 	z-index:1;
 	width:100vw`)}
 }}
@@ -125,17 +118,18 @@ ${(props)=>{
 
 const ContentWrap = styled.div`
 position:absolute;
+box-sizing:border-box;
 width:100vw;
-min-height:100vh;
+min-height:${(props)=>props.theme.fullscreen?'100vh':props.theme.height};
 ${(props)=>{
-	if(props.theme.skewed && props.top){
+	if(props.top){
 		return `
 		transform:skew(30deg);
 		margin-left:1000px`
 	}
 }}
 @media(max-width:768px){
-font-size:75%
+font-size:70%
 }
 `
 
@@ -144,38 +138,65 @@ width:25%;
 position:absolute;
 top:50%;
 text-align:center;
+overflow-wrap:break-word;
 transform:translateY(-50%);
-${(props)=>props.right ?'right:5%;color:white':'left:5%;color:#222'}
+${(props)=>{
+	if(props.right){
+		return(`
+		right:5%;
+		> p{
+			color:${props.theme.secondaryTextColor};
+			animation-name:${slideLeft};
+			animation-duration:1s;
+			
+		}
+		`)
+	}else{
+		return(`
+		left:5%;
+		> p{
+			color:${props.theme.primaryTextColor};
+			animation-name:${slideLeft};
+			animation-duration:1s;
+
+		}
+		`)
+	}
+}}
 `
 
 const Image = styled.img`
 position:absolute;
-width:35%;
+width:${(props)=>props.theme.fullscreen ? '80%' :'60%'};
 top:50%;
 left:50%;
-transform:translate(-50%,-50%)
+transform:translate(-50%,-50%);
 `
 
 const Heading = styled.h1`
 font-size:2em;
-font-family:Arial,Helvetica,sans-serif;
-font-weight:bold;
-${(props)=>props.color ? 'color:'+props.color : 'color:black'}
+font-family:Roboto,Arial,Helvetica,sans-serif;
+font-weight:400;
+font-size:40px;
+animation-name:${slideLeft};
+animation-duration:1s;
+color:${(props)=>props.color}
+@media(max-width:768px){
+	font-size:21px;
+}
 `
 
 const Handle = styled.div`
 position:absolute;
 height:100%;
 display:block;
-background-color:#fda800;
+background-color:${(props)=>props.theme.divider || '#fda000'};
 width:5px;
 top:0;
 left:50%;
 z-index:3;
-${(props)=>props.theme.skewed ? `
 top:50%;
 transform:rotate(30deg) translateY(-50%);
 transform-origin:top;
-height:200%`:null}
-
+height:200%
 `
